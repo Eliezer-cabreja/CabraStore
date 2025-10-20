@@ -4,23 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💀 Chismesito Duro 💀</title>
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
-
 body{margin:0;font-family:'Poppins',sans-serif;background:#0a0a0a;color:#fff;}
-header{text-align:center;padding:20px 10px;background:#1a0000;box-shadow:0 0 40px #ff0000;}
+header{text-align:center;padding:20px 10px;background:#1a0000;box-shadow:0 0 40px #ff0000;position:relative;}
 header h1{color:#ff0000;font-size:2.8em;text-shadow:0 0 20px #ff0000;}
 header p{color:#aaa;margin-top:5px;font-size:1.1em;}
+#logoutBtn{position:absolute;top:20px;left:20px;padding:10px;border:none;border-radius:8px;background:#ff0000;color:#fff;cursor:pointer;display:none;}
 #auth-section{max-width:400px;margin:40px auto;display:flex;flex-direction:column;gap:10px;}
 #auth-section input{padding:10px;border-radius:8px;border:none;background:#1b0b0b;color:#fff;}
 #auth-section button{padding:10px;border-radius:8px;border:none;background:#ff0000;color:#fff;cursor:pointer;transition:0.3s;}
 #auth-section button:hover{background:#ff4444;}
 .container{max-width:1000px;margin:20px auto;padding:0 15px;display:none;}
-#logoutBtn{width:150px;margin:15px auto;display:block;padding:10px;border:none;border-radius:8px;background:#ff0000;color:#fff;cursor:pointer;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:25px;}
 .card{background:#120000;border-radius:20px;overflow:hidden;cursor:pointer;position:relative;border:2px solid #330000;box-shadow:0 0 15px #ff0000;transition:0.4s;}
 .card:hover{transform:scale(1.05) rotate(-1deg);border-color:#ff4444;box-shadow:0 0 35px #ff0000;}
@@ -50,6 +48,7 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 <header>
 <h1>💀 Chismesito Duro 💀</h1>
 <p id="headerText">Regístrate o inicia sesión para ver los chismes 🔥</p>
+<button id="logoutBtn">Cerrar sesión</button>
 </header>
 
 <div id="auth-section">
@@ -61,7 +60,6 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 </div>
 
 <div class="container" id="feed-section">
-<button id="logoutBtn">Cerrar sesión</button>
 <div id="feed" class="grid"></div>
 </div>
 
@@ -101,7 +99,6 @@ const feedEl = document.getElementById("feed");
 const headerText = document.getElementById("headerText");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// Memes
 const memes = [
   {id:"1", imageURL:"https://i.imgur.com/abcd123.jpg", caption:"Primer chisme 🔥", createdAt:"2025-10-20 14:00"},
   {id:"2", imageURL:"https://i.imgur.com/efgh456.jpg", caption:"Otro chisme 👀", createdAt:"2025-10-20 15:00"},
@@ -109,6 +106,17 @@ const memes = [
 ];
 
 let currentUser = null;
+
+// Crear memes en Firestore si no existen
+async function initMemes(){
+  for(const m of memes){
+    const docRef = db.collection("posts").doc(m.id);
+    const docSnap = await docRef.get();
+    if(!docSnap.exists){
+      await docRef.set({likes:0, likedBy:[], comments:[], caption:m.caption, imageURL:m.imageURL, createdAt:m.createdAt});
+    }
+  }
+}
 
 // Registro
 document.getElementById("registerBtn").addEventListener("click", async ()=>{
@@ -122,7 +130,9 @@ document.getElementById("registerBtn").addEventListener("click", async ()=>{
     currentUser = userCred.user;
     authSection.style.display="none";
     feedSection.style.display="block";
+    logoutBtn.style.display="block";
     headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
+    await initMemes();
     renderFeed();
   }catch(err){alert(err.message);}
 });
@@ -137,7 +147,9 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
     currentUser = userCred.user;
     authSection.style.display="none";
     feedSection.style.display="block";
+    logoutBtn.style.display="block";
     headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
+    await initMemes();
     renderFeed();
   }catch(err){alert(err.message);}
 });
@@ -148,20 +160,24 @@ logoutBtn.addEventListener("click", async()=>{
   currentUser = null;
   authSection.style.display="flex";
   feedSection.style.display="none";
+  logoutBtn.style.display="none";
   headerText.textContent = "Regístrate o inicia sesión para ver los chismes 🔥";
 });
 
 // Mantener sesión
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(async user=>{
   if(user){
     currentUser = user;
     authSection.style.display="none";
     feedSection.style.display="block";
+    logoutBtn.style.display="block";
     headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
+    await initMemes();
     renderFeed();
   } else {
     authSection.style.display="flex";
     feedSection.style.display="none";
+    logoutBtn.style.display="none";
     headerText.textContent = "Regístrate o inicia sesión para ver los chismes 🔥";
   }
 });
@@ -169,31 +185,26 @@ auth.onAuthStateChanged(user=>{
 // Render Feed
 async function renderFeed(){
   feedEl.innerHTML="";
-  for(const m of memes){
-    const doc = await db.collection("posts").doc(m.id).get();
-    let data = doc.exists ? doc.data() : {likes:0, likedBy:[], comments:[]};
-
+  const postsSnap = await db.collection("posts").get();
+  for(const doc of postsSnap.docs){
+    const data = doc.data();
     const card = document.createElement("div");
     card.className="card";
     const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
     card.innerHTML=`
-      <img src="${m.imageURL}" alt="chisme">
+      <img src="${data.imageURL}" alt="chisme">
       <div class="meta">
-        <div class="caption">${m.caption}</div>
+        <div class="caption">${data.caption}</div>
         <div class="likes ${likedClass}">❤️ ${data.likes}</div>
       </div>
-      <div class="time">🕒 ${m.createdAt}</div>
+      <div class="time">🕒 ${data.createdAt}</div>
     `;
-
     const imgEl = card.querySelector("img");
     const likeEl = card.querySelector(".likes");
-    imgEl.addEventListener("click",()=>openModal(m.id));
-
+    imgEl.addEventListener("click",()=>openModal(doc.id));
     likeEl.addEventListener("click", async()=>{
       if(!currentUser){ alert("Inicia sesión"); return; }
-      const docRef = db.collection("posts").doc(m.id);
-      const docSnap = await docRef.get();
-      let postData = docSnap.exists ? docSnap.data() : {likes:0, likedBy:[], comments:[]};
+      let postData = data;
       if(postData.likedBy.includes(currentUser.uid)){
         postData.likes--;
         postData.likedBy = postData.likedBy.filter(u=>u!==currentUser.uid);
@@ -201,17 +212,71 @@ async function renderFeed(){
         postData.likes++;
         postData.likedBy.push(currentUser.uid);
       }
-      await docRef.set(postData);
+      await db.collection("posts").doc(doc.id).set(postData);
       renderFeed();
     });
-
     feedEl.appendChild(card);
   }
 }
 
 // ===== Modal =====
-// Mantén el mismo código de modal que ya tenías...
+// Mantén el código del modal igual que antes
+const modal = document.getElementById("modal");
+const modalImg = modal.querySelector("img");
+const likesEl = modal.querySelector(".likes");
+const commentsDiv = modal.querySelector(".comments");
+const input = modal.querySelector(".comment-input input");
+const btn = modal.querySelector(".comment-input button");
+
+async function openModal(postId){
+  modal.style.display="flex";
+  const docSnap = await db.collection("posts").doc(postId).get();
+  let data = docSnap.data();
+  modalImg.src = data.imageURL;
+
+  function renderModal(){
+    const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
+    likesEl.className = `likes ${likedClass}`;
+    likesEl.textContent = `❤️ ${data.likes}`;
+    commentsDiv.innerHTML = "";
+    data.comments.forEach(c=>{
+      const div = document.createElement("div");
+      div.className="comment";
+      div.textContent=c;
+      commentsDiv.appendChild(div);
+    });
+  }
+  renderModal();
+
+  likesEl.onclick = async()=>{
+    if(!currentUser){ alert("Inicia sesión"); return; }
+    if(data.likedBy.includes(currentUser.uid)){
+      data.likes--; data.likedBy = data.likedBy.filter(u=>u!==currentUser.uid);
+    } else {
+      data.likes++; data.likedBy.push(currentUser.uid);
+    }
+    await db.collection("posts").doc(postId).set(data);
+    renderModal();
+    renderFeed();
+  }
+
+  btn.onclick = async()=>{
+    const val = input.value.trim();
+    if(val){
+      data.comments.push(val);
+      input.value="";
+      await db.collection("posts").doc(postId).set(data);
+      renderModal();
+      renderFeed();
+    }
+  }
+}
+
+// Cerrar modal
+document.querySelector(".close-modal").addEventListener("click",()=>modal.style.display="none");
+modal.addEventListener("click",(e)=>{if(e.target.id=="modal") e.target.style.display="none";});
 </script>
 </body>
 </html>
+
 
