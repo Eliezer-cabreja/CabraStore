@@ -33,13 +33,22 @@ header p{
   margin-top:5px;
   font-size:1.1em;
 }
-.top-buttons{
+.auth-container{
   display:flex;
-  justify-content:center;
-  gap:30px;
-  margin-top:10px;
+  flex-direction:column;
+  align-items:center;
+  gap:15px;
+  margin:30px 0;
 }
-.top-buttons button{
+.auth-container input{
+  padding:10px;
+  width:250px;
+  border-radius:8px;
+  border:none;
+  background:#1b0b0b;
+  color:#fff;
+}
+.auth-container button{
   padding:10px 20px;
   border:none;
   border-radius:8px;
@@ -50,9 +59,9 @@ header p{
   box-shadow:0 0 15px #ff0000;
   transition:0.3s;
 }
-.top-buttons button:hover{
+.auth-container button:hover{
   background:#ff0000;
-  transform:scale(1.1);
+  transform:scale(1.05);
   box-shadow:0 0 25px #ff4444;
 }
 .container{
@@ -210,11 +219,18 @@ header p{
 <header>
 <h1>💀 Chismesito Duro 💀</h1>
 <p>Las fotos las subo yo, tú solo puedes dar ❤️ y comentar 👀</p>
-<div class="top-buttons">
-<button id="loginGoogle">Login/Registrar Google</button>
-<button id="loginFacebook">Login/Registrar Facebook</button>
-</div>
 </header>
+
+<div class="auth-container">
+  <input type="text" id="nameReg" placeholder="Nombre">
+  <input type="email" id="emailReg" placeholder="Correo electrónico">
+  <input type="password" id="passReg" placeholder="Contraseña">
+  <button id="registerBtn">Registrarse</button>
+  <hr style="width:250px;border:1px solid #330000;">
+  <input type="email" id="emailLogin" placeholder="Correo electrónico">
+  <input type="password" id="passLogin" placeholder="Contraseña">
+  <button id="loginBtn">Iniciar sesión</button>
+</div>
 
 <div class="container">
 <div id="feed" class="grid"></div>
@@ -237,7 +253,6 @@ header p{
 </div>
 
 <script>
-// ====== Firebase Config ======
 const firebaseConfig = {
   apiKey: "AIzaSyACn125j5x8Kc9iYWdE_2tNRAZlsQCPkXQ",
   authDomain: "chismes-9a0ad.firebaseapp.com",
@@ -260,22 +275,32 @@ const memes = [
   {id:"3", imageURL:"https://i.imgur.com/ijkl789.jpg", caption:"Chisme sicópata 😎"}
 ];
 
-// ====== Login con Google ======
-document.getElementById("loginGoogle").addEventListener("click", async()=>{
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const result = await auth.signInWithPopup(provider);
-  currentUser = result.user;
-  alert("Bienvenido " + currentUser.displayName);
-  renderFeed();
+// ====== Registro ======
+document.getElementById("registerBtn").addEventListener("click", async ()=>{
+  const name = document.getElementById("nameReg").value.trim();
+  const email = document.getElementById("emailReg").value.trim();
+  const pass = document.getElementById("passReg").value.trim();
+  if(!name || !email || !pass){ alert("Completa todos los campos"); return; }
+  try{
+    const userCred = await auth.createUserWithEmailAndPassword(email, pass);
+    await userCred.user.updateProfile({displayName:name});
+    alert("Registrado con éxito "+name);
+    currentUser = userCred.user;
+    renderFeed();
+  }catch(err){ alert("Error: "+err.message); }
 });
 
-// ====== Login con Facebook ======
-document.getElementById("loginFacebook").addEventListener("click", async()=>{
-  const provider = new firebase.auth.FacebookAuthProvider();
-  const result = await auth.signInWithPopup(provider);
-  currentUser = result.user;
-  alert("Bienvenido " + currentUser.displayName);
-  renderFeed();
+// ====== Login ======
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
+  const email = document.getElementById("emailLogin").value.trim();
+  const pass = document.getElementById("passLogin").value.trim();
+  if(!email || !pass){ alert("Completa todos los campos"); return; }
+  try{
+    const userCred = await auth.signInWithEmailAndPassword(email, pass);
+    currentUser = userCred.user;
+    alert("Bienvenido "+currentUser.displayName);
+    renderFeed();
+  }catch(err){ alert("Error: "+err.message); }
 });
 
 // ====== Render Feed ======
@@ -288,8 +313,7 @@ async function renderFeed(){
     const card = document.createElement("div");
     card.className = "card";
     const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
-    card.innerHTML=`
-      <img src="${m.imageURL}" alt="chisme">
+    card.innerHTML=`<img src="${m.imageURL}" alt="chisme">
       <div class="meta">
         <div class="caption">${m.caption}</div>
         <div class="likes ${likedClass}">❤️ ${data.likes}</div>
@@ -342,8 +366,8 @@ async function openModal(postId){
     commentsDiv.innerHTML = "";
     data.comments.forEach(c=>{
       const div = document.createElement("div");
-      div.className = "comment";
-      div.textContent = c;
+      div.className="comment";
+      div.textContent=c;
       commentsDiv.appendChild(div);
     });
   }
@@ -379,5 +403,3 @@ modal.addEventListener("click",(e)=>{if(e.target.id=="modal") e.target.style.dis
 </script>
 </body>
 </html>
-
-
