@@ -1,236 +1,383 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>💅 Chismesito Hermana Josefina Serrano 💅</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #190018 0%, #000 100%);
-      color: #fff;
-      overflow-x: hidden;
-    }
-    header {
-      text-align: center;
-      padding: 25px 10px;
-      background: rgba(255, 0, 150, 0.2);
-      backdrop-filter: blur(8px);
-      border-bottom: 2px solid #ff0099;
-      box-shadow: 0 0 25px #ff0099;
-    }
-    header h1 {
-      font-size: 2.3em;
-      color: #ff33aa;
-      margin: 0;
-      text-shadow: 0 0 10px #ff33aa;
-    }
-    header p { color: #eee; margin-top: 6px; }
-    .container {
-      max-width: 1100px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-    .upload-box {
-      display: flex;
-      gap: 10px;
-      background: #111;
-      padding: 15px;
-      border-radius: 14px;
-      box-shadow: 0 0 20px rgba(255, 0, 150, 0.3);
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .upload-box input[type=file] { display: none; }
-    .upload-box label, button {
-      background: #ff0099;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 10px;
-      cursor: pointer;
-      color: white;
-      transition: 0.25s;
-    }
-    .upload-box label:hover, button:hover {
-      background: #ff33aa;
-      transform: scale(1.05);
-    }
-    .upload-box input[type=text] {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #333;
-      background: #1b1b1b;
-      color: white;
-      outline: none;
-    }
-    #status {
-      margin-top: 10px;
-      color: #aaa;
-      text-align: center;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px,1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .card {
-      background: #151515;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 0 20px rgba(255,0,150,0.3);
-      transition: 0.3s;
-    }
-    .card:hover { transform: translateY(-5px); }
-    .card img {
-      width: 100%;
-      height: 250px;
-      object-fit: cover;
-      display: block;
-    }
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 15px;
-    }
-    .meta .caption {
-      color: #ccc;
-      font-size: 14px;
-      flex: 1;
-      margin-right: 8px;
-      word-break: break-word;
-    }
-    .likes {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      color: #ff33aa;
-      font-weight: bold;
-      user-select: none;
-    }
-    footer {
-      text-align: center;
-      margin: 50px 0 20px;
-      color: #666;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💀 Chismesito Duro 💀</title>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+body{
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:#0a0a0a;
+  color:#fff;
+}
+header{
+  text-align:center;
+  padding:20px 10px;
+  background:#1a0000;
+  box-shadow:0 0 40px #ff0000;
+}
+header h1{
+  color:#ff0000;
+  font-size:2.8em;
+  text-shadow:0 0 20px #ff0000;
+}
+header p{
+  color:#aaa;
+  margin-top:5px;
+  font-size:1.1em;
+}
+.top-buttons{
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin-top:10px;
+}
+.top-buttons button{
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  color:#fff;
+  background:#330000;
+  box-shadow:0 0 15px #ff0000;
+  transition:0.3s;
+}
+.top-buttons button:hover{
+  background:#ff0000;
+  transform:scale(1.1);
+  box-shadow:0 0 25px #ff4444;
+}
+.container{
+  max-width:1000px;
+  margin:20px auto;
+  padding:0 15px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:25px;
+}
+.card{
+  background:#120000;
+  border-radius:20px;
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  border:2px solid #330000;
+  box-shadow:0 0 15px #ff0000;
+  transition:0.4s;
+}
+.card:hover{
+  transform:scale(1.05) rotate(-1deg);
+  border-color:#ff4444;
+  box-shadow:0 0 35px #ff0000;
+}
+.card img{
+  width:100%;
+  height:320px;
+  object-fit:cover;
+  display:block;
+  border-bottom:2px solid #330000;
+  transition:0.3s;
+}
+.meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 15px;
+}
+.caption{
+  font-weight:bold;
+  font-size:1em;
+  color:#fff;
+}
+.likes{
+  cursor:pointer;
+  color:#ff4444;
+  font-weight:bold;
+  transition:0.3s;
+}
+.likes.liked{
+  color:#ff0000;
+  animation:pop 0.3s;
+}
+@keyframes pop{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.5);}
+  100%{transform:scale(1);}
+}
+.time{
+  font-size:12px;
+  color:#999;
+  padding:0 15px 10px 15px;
+}
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.95);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+  flex-direction:column;
+}
+.modal-content{
+  max-width:90%;
+  max-height:90%;
+  background:#120000;
+  border:3px solid #ff0000;
+  border-radius:20px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  animation:slideUp 0.4s ease;
+}
+@keyframes slideUp{
+  from{transform:translateY(50px);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+.modal img{
+  width:100%;
+  max-height:500px;
+  object-fit:contain;
+  background:#000;
+}
+.modal-meta{
+  padding:15px;
+}
+.modal .likes{
+  font-size:18px;
+  margin-bottom:10px;
+}
+.comments{
+  max-height:220px;
+  overflow-y:auto;
+  margin-bottom:10px;
+}
+.comment{
+  background:#220000;
+  margin-top:5px;
+  padding:6px;
+  border-radius:6px;
+  font-size:14px;
+}
+.comment-input{
+  display:flex;
+  gap:5px;
+}
+.comment-input input{
+  flex:1;
+  padding:6px;
+  border-radius:6px;
+  border:none;
+  background:#1b0b0b;
+  color:#fff;
+}
+.comment-input button{
+  padding:6px 12px;
+  border-radius:6px;
+  border:none;
+  background:#ff0000;
+  color:#fff;
+  cursor:pointer;
+  transition:0.2s;
+}
+.comment-input button:hover{
+  background:#ff4444;
+}
+.close-modal{
+  position:absolute;
+  top:15px;
+  right:25px;
+  font-size:32px;
+  color:#ff0000;
+  cursor:pointer;
+  font-weight:bold;
+  text-shadow:0 0 15px #ff0000;
+}
+</style>
 </head>
 <body>
-  <header>
-    <h1>💅 Chismesito Hermana Josefina Serrano 💅</h1>
-    <p>Sube tu foto o chisme anónimo y deja que hablen 👀</p>
-  </header>
+<header>
+<h1>💀 Chismesito Duro 💀</h1>
+<p>Las fotos las subo yo, tú solo puedes dar ❤️ y comentar 👀</p>
+<div class="top-buttons">
+<button id="loginGoogle">Login/Registrar Google</button>
+<button id="loginFacebook">Login/Registrar Facebook</button>
+</div>
+</header>
 
-  <div class="container">
-    <div class="upload-box">
-      <label for="fileInput">📸 Elegir imagen</label>
-      <input id="fileInput" type="file" accept="image/*">
-      <input id="caption" type="text" placeholder="Di el chisme aquí... 👀">
-      <button id="uploadBtn">Subir</button>
-    </div>
-    <div id="status">Conectando a Firebase...</div>
-    <div id="feed" class="grid"></div>
-  </div>
+<div class="container">
+<div id="feed" class="grid"></div>
+</div>
 
-  <footer>© 2025 Chismesito Hermana Josefina Serrano 💅 — creado por Eliezer 😎</footer>
+<!-- Modal -->
+<div id="modal" class="modal">
+<div class="close-modal">&times;</div>
+<div class="modal-content">
+<img src="" alt="chisme">
+<div class="modal-meta">
+<div class="likes">❤️ 0</div>
+<div class="comments"></div>
+<div class="comment-input">
+<input type="text" placeholder="Escribe un comentario...">
+<button>Comentar</button>
+</div>
+</div>
+</div>
+</div>
 
-  <!-- Firebase SDK compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-auth-compat.js"></script>
+<script>
+// ====== Firebase Config ======
+const firebaseConfig = {
+  apiKey: "AIzaSyACn125j5x8Kc9iYWdE_2tNRAZlsQCPkXQ",
+  authDomain: "chismes-9a0ad.firebaseapp.com",
+  projectId: "chismes-9a0ad",
+  storageBucket: "chismes-9a0ad.firebasestorage.app",
+  messagingSenderId: "890061579997",
+  appId: "1:890061579997:web:726eadbfba9cc033e0dd34",
+  measurementId: "G-6S910RXE0H"
+};
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyACn125j5x8Kc9iYWdE_2tNRAZlsQCPkXQ",
-      authDomain: "chismes-9a0ad.firebaseapp.com",
-      projectId: "chismes-9a0ad",
-      storageBucket: "chismes-9a0ad.appspot.com",
-      messagingSenderId: "890061579997",
-      appId: "1:890061579997:web:726eadbfba9cc033e0dd34",
-      measurementId: "G-6S910RXE0H"
-    };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const auth = firebase.auth();
+let currentUser = null;
+const feedEl = document.getElementById("feed");
+const memes = [
+  {id:"1", imageURL:"https://i.imgur.com/abcd123.jpg", caption:"Primer chisme 🔥"},
+  {id:"2", imageURL:"https://i.imgur.com/efgh456.jpg", caption:"Otro chisme 👀"},
+  {id:"3", imageURL:"https://i.imgur.com/ijkl789.jpg", caption:"Chisme sicópata 😎"}
+];
 
-    const statusEl = document.getElementById('status');
-    const fileInput = document.getElementById('fileInput');
-    const captionInput = document.getElementById('caption');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const feedEl = document.getElementById('feed');
+// ====== Login con Google ======
+document.getElementById("loginGoogle").addEventListener("click", async()=>{
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const result = await auth.signInWithPopup(provider);
+  currentUser = result.user;
+  alert("Bienvenido " + currentUser.displayName);
+  renderFeed();
+});
 
-    let user = null;
+// ====== Login con Facebook ======
+document.getElementById("loginFacebook").addEventListener("click", async()=>{
+  const provider = new firebase.auth.FacebookAuthProvider();
+  const result = await auth.signInWithPopup(provider);
+  currentUser = result.user;
+  alert("Bienvenido " + currentUser.displayName);
+  renderFeed();
+});
 
-    // Inicio anónimo
-    auth.signInAnonymously().then(u => {
-      user = u.user;
-      statusEl.textContent = "Listo para subir chismes 🔥";
-    }).catch(e => {
-      statusEl.textContent = "Error al conectar: " + e.message;
-    });
-
-    // Subir imagen
-    uploadBtn.addEventListener('click', async () => {
-      const file = fileInput.files[0];
-      if (!file) return alert("Sube una imagen, hermana 💅");
-      uploadBtn.disabled = true;
-      uploadBtn.textContent = "Subiendo...";
-      try {
-        const fileRef = storage.ref("chismes/" + Date.now() + "_" + file.name);
-        await fileRef.put(file);
-        const url = await fileRef.getDownloadURL();
-        await db.collection("chismes").add({
-          imageURL: url,
-          caption: captionInput.value,
-          likes: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        captionInput.value = "";
-        fileInput.value = "";
-        statusEl.textContent = "✅ Chisme subido con éxito";
-      } catch (err) {
-        statusEl.textContent = "Error: " + err.message;
+// ====== Render Feed ======
+async function renderFeed(){
+  feedEl.innerHTML="";
+  for(const m of memes){
+    const doc = await db.collection("posts").doc(m.id).get();
+    let data = doc.exists ? doc.data() : {likes:0, likedBy:[], comments:[]};
+    
+    const card = document.createElement("div");
+    card.className = "card";
+    const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
+    card.innerHTML=`
+      <img src="${m.imageURL}" alt="chisme">
+      <div class="meta">
+        <div class="caption">${m.caption}</div>
+        <div class="likes ${likedClass}">❤️ ${data.likes}</div>
+      </div>
+    `;
+    
+    const imgEl = card.querySelector("img");
+    const likeEl = card.querySelector(".likes");
+    imgEl.addEventListener("click",()=>openModal(m.id));
+    
+    likeEl.addEventListener("click", async()=>{
+      if(!currentUser){ alert("Inicia sesión"); return; }
+      const docRef = db.collection("posts").doc(m.id);
+      const docSnap = await docRef.get();
+      let postData = docSnap.exists ? docSnap.data() : {likes:0, likedBy:[], comments:[]};
+      if(postData.likedBy.includes(currentUser.uid)){
+        postData.likes--;
+        postData.likedBy = postData.likedBy.filter(u=>u!==currentUser.uid);
+      } else {
+        postData.likes++;
+        postData.likedBy.push(currentUser.uid);
       }
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = "Subir";
+      await docRef.set(postData);
+      renderFeed();
     });
+    
+    feedEl.appendChild(card);
+  }
+}
 
-    // Mostrar feed y dar likes
-    db.collection("chismes").orderBy("createdAt", "desc").onSnapshot(snap => {
-      feedEl.innerHTML = "";
-      snap.forEach(doc => {
-        const data = doc.data();
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${data.imageURL}" alt="chisme">
-          <div class="meta">
-            <div class="caption">${data.caption || ""}</div>
-            <div class="likes">💖 ${data.likes || 0}</div>
-          </div>
-        `;
-        const likeBtn = card.querySelector(".likes");
-        likeBtn.addEventListener("click", async () => {
-          await db.collection("chismes").doc(doc.id).update({
-            likes: firebase.firestore.FieldValue.increment(1)
-          });
-        });
-        feedEl.appendChild(card);
-      });
+// ====== Modal ======
+const modal = document.getElementById("modal");
+const modalImg = modal.querySelector("img");
+const likesEl = modal.querySelector(".likes");
+const commentsDiv = modal.querySelector(".comments");
+const input = modal.querySelector(".comment-input input");
+const btn = modal.querySelector(".comment-input button");
+
+async function openModal(postId){
+  modal.style.display="flex";
+  const docSnap = await db.collection("posts").doc(postId).get();
+  let data = docSnap.exists ? docSnap.data() : {likes:0, likedBy:[], comments:[]};
+  const meme = memes.find(m=>m.id===postId);
+  modalImg.src = meme.imageURL;
+  
+  function renderModal(){
+    const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
+    likesEl.className = `likes ${likedClass}`;
+    likesEl.textContent = `❤️ ${data.likes}`;
+    commentsDiv.innerHTML = "";
+    data.comments.forEach(c=>{
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.textContent = c;
+      commentsDiv.appendChild(div);
     });
-  </script>
+  }
+  renderModal();
+
+  likesEl.onclick = async()=>{
+    if(!currentUser){ alert("Inicia sesión"); return; }
+    if(data.likedBy.includes(currentUser.uid)){
+      data.likes--; data.likedBy = data.likedBy.filter(u=>u!==currentUser.uid);
+    } else {
+      data.likes++; data.likedBy.push(currentUser.uid);
+    }
+    await db.collection("posts").doc(postId).set(data);
+    renderModal();
+    renderFeed();
+  }
+
+  btn.onclick = async()=>{
+    const val = input.value.trim();
+    if(val){
+      data.comments.push(val);
+      input.value="";
+      await db.collection("posts").doc(postId).set(data);
+      renderModal();
+      renderFeed();
+    }
+  }
+}
+
+// Cerrar modal
+document.querySelector(".close-modal").addEventListener("click",()=>modal.style.display="none");
+modal.addEventListener("click",(e)=>{if(e.target.id=="modal") e.target.style.display="none";});
+</script>
 </body>
 </html>
-
-
 
 
