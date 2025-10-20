@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💀 Chismesito Duro 💀</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
 body{margin:0;font-family:'Poppins',sans-serif;background:#0a0a0a;color:#fff;}
@@ -80,83 +77,49 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 </div>
 
 <script>
-// Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyACn125j5x8Kc9iYWdE_2tNRAZlsQCPkXQ",
-  authDomain: "chismes-9a0ad.firebaseapp.com",
-  projectId: "chismes-9a0ad",
-  storageBucket: "chismes-9a0ad.appspot.com",
-  messagingSenderId: "890061579997",
-  appId: "1:890061579997:web:726eadbfba9cc033e0dd34"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Memes locales
+const memes = [
+  {id:"1", imageURL:"https://i.imgur.com/abcd123.jpg", caption:"Primer chisme 🔥", createdAt:"2025-10-20 14:00", likes:0, liked:false, comments:[]},
+  {id:"2", imageURL:"https://i.imgur.com/efgh456.jpg", caption:"Otro chisme 👀", createdAt:"2025-10-20 15:00", likes:0, liked:false, comments:[]},
+  {id:"3", imageURL:"https://i.imgur.com/ijkl789.jpg", caption:"Chisme sicópata 😎", createdAt:"2025-10-20 16:00", likes:0, liked:false, comments:[]}
+];
 
+let currentUser = null;
+
+// Auth (solo local)
 const authSection = document.getElementById("auth-section");
 const feedSection = document.getElementById("feed-section");
 const feedEl = document.getElementById("feed");
 const headerText = document.getElementById("headerText");
 const logoutBtn = document.getElementById("logoutBtn");
 
-const memes = [
-  {id:"1", imageURL:"https://i.imgur.com/abcd123.jpg", caption:"Primer chisme 🔥", createdAt:"2025-10-20 14:00"},
-  {id:"2", imageURL:"https://i.imgur.com/efgh456.jpg", caption:"Otro chisme 👀", createdAt:"2025-10-20 15:00"},
-  {id:"3", imageURL:"https://i.imgur.com/ijkl789.jpg", caption:"Chisme sicópata 😎", createdAt:"2025-10-20 16:00"}
-];
-
-let currentUser = null;
-
-// Crear memes en Firestore si no existen
-async function initMemes(){
-  for(const m of memes){
-    const docRef = db.collection("posts").doc(m.id);
-    const docSnap = await docRef.get();
-    if(!docSnap.exists){
-      await docRef.set({likes:0, likedBy:[], comments:[], caption:m.caption, imageURL:m.imageURL, createdAt:m.createdAt});
-    }
-  }
-}
-
-// Registro
-document.getElementById("registerBtn").addEventListener("click", async ()=>{
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const name = document.getElementById("name").value;
-  if(!email || !password || !name){alert("Completa todos los campos"); return;}
-  try{
-    const userCred = await auth.createUserWithEmailAndPassword(email,password);
-    await userCred.user.updateProfile({displayName:name});
-    currentUser = userCred.user;
-    authSection.style.display="none";
-    feedSection.style.display="block";
-    logoutBtn.style.display="block";
-    headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
-    await initMemes();
-    renderFeed();
-  }catch(err){alert(err.message);}
+document.getElementById("registerBtn").addEventListener("click", ()=>{
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if(!name || !email || !pass){alert("Completa todos los campos"); return;}
+  currentUser = {name,email};
+  authSection.style.display="none";
+  feedSection.style.display="block";
+  logoutBtn.style.display="block";
+  headerText.textContent = "Bienvenido "+currentUser.name+" 🔥";
+  renderFeed();
 });
 
-// Login
-document.getElementById("loginBtn").addEventListener("click", async ()=>{
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  if(!email || !password){alert("Completa los campos"); return;}
-  try{
-    const userCred = await auth.signInWithEmailAndPassword(email,password);
-    currentUser = userCred.user;
-    authSection.style.display="none";
-    feedSection.style.display="block";
-    logoutBtn.style.display="block";
-    headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
-    await initMemes();
-    renderFeed();
-  }catch(err){alert(err.message);}
+document.getElementById("loginBtn").addEventListener("click", ()=>{
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if(!email || !pass){alert("Completa los campos"); return;}
+  // Solo local, aceptamos cualquier usuario
+  currentUser = {name:"Usuario", email};
+  authSection.style.display="none";
+  feedSection.style.display="block";
+  logoutBtn.style.display="block";
+  headerText.textContent = "Bienvenido "+currentUser.name+" 🔥";
+  renderFeed();
 });
 
-// Logout
-logoutBtn.addEventListener("click", async()=>{
-  await auth.signOut();
+logoutBtn.addEventListener("click", ()=>{
   currentUser = null;
   authSection.style.display="flex";
   feedSection.style.display="none";
@@ -164,82 +127,51 @@ logoutBtn.addEventListener("click", async()=>{
   headerText.textContent = "Regístrate o inicia sesión para ver los chismes 🔥";
 });
 
-// Mantener sesión
-auth.onAuthStateChanged(async user=>{
-  if(user){
-    currentUser = user;
-    authSection.style.display="none";
-    feedSection.style.display="block";
-    logoutBtn.style.display="block";
-    headerText.textContent = "Bienvenido "+currentUser.displayName+" 🔥";
-    await initMemes();
-    renderFeed();
-  } else {
-    authSection.style.display="flex";
-    feedSection.style.display="none";
-    logoutBtn.style.display="none";
-    headerText.textContent = "Regístrate o inicia sesión para ver los chismes 🔥";
-  }
-});
-
 // Render Feed
-async function renderFeed(){
+function renderFeed(){
   feedEl.innerHTML="";
-  const postsSnap = await db.collection("posts").get();
-  for(const doc of postsSnap.docs){
-    const data = doc.data();
+  memes.forEach((m)=>{
     const card = document.createElement("div");
     card.className="card";
-    const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
+    const likedClass = m.liked ? "liked" : "";
     card.innerHTML=`
-      <img src="${data.imageURL}" alt="chisme">
+      <img src="${m.imageURL}" alt="chisme">
       <div class="meta">
-        <div class="caption">${data.caption}</div>
-        <div class="likes ${likedClass}">❤️ ${data.likes}</div>
+        <div class="caption">${m.caption}</div>
+        <div class="likes ${likedClass}">❤️ ${m.likes}</div>
       </div>
-      <div class="time">🕒 ${data.createdAt}</div>
+      <div class="time">🕒 ${m.createdAt}</div>
     `;
     const imgEl = card.querySelector("img");
     const likeEl = card.querySelector(".likes");
-    imgEl.addEventListener("click",()=>openModal(doc.id));
-    likeEl.addEventListener("click", async()=>{
-      if(!currentUser){ alert("Inicia sesión"); return; }
-      let postData = data;
-      if(postData.likedBy.includes(currentUser.uid)){
-        postData.likes--;
-        postData.likedBy = postData.likedBy.filter(u=>u!==currentUser.uid);
-      } else {
-        postData.likes++;
-        postData.likedBy.push(currentUser.uid);
-      }
-      await db.collection("posts").doc(doc.id).set(postData);
+    imgEl.addEventListener("click",()=>openModal(m));
+    likeEl.addEventListener("click", ()=>{
+      if(!currentUser){alert("Inicia sesión"); return;}
+      if(m.liked){m.likes--; m.liked=false;}else{m.likes++; m.liked=true;}
       renderFeed();
     });
     feedEl.appendChild(card);
-  }
+  });
 }
 
-// ===== Modal =====
-// Mantén el código del modal igual que antes
+// Modal
 const modal = document.getElementById("modal");
 const modalImg = modal.querySelector("img");
 const likesEl = modal.querySelector(".likes");
 const commentsDiv = modal.querySelector(".comments");
 const input = modal.querySelector(".comment-input input");
 const btn = modal.querySelector(".comment-input button");
+const closeModalBtn = document.querySelector(".close-modal");
 
-async function openModal(postId){
+function openModal(meme){
   modal.style.display="flex";
-  const docSnap = await db.collection("posts").doc(postId).get();
-  let data = docSnap.data();
-  modalImg.src = data.imageURL;
+  modalImg.src = meme.imageURL;
 
   function renderModal(){
-    const likedClass = currentUser && data.likedBy.includes(currentUser.uid) ? "liked" : "";
-    likesEl.className = `likes ${likedClass}`;
-    likesEl.textContent = `❤️ ${data.likes}`;
-    commentsDiv.innerHTML = "";
-    data.comments.forEach(c=>{
+    likesEl.textContent = `❤️ ${meme.likes}`;
+    likesEl.className = `likes ${meme.liked ? "liked" : ""}`;
+    commentsDiv.innerHTML="";
+    meme.comments.forEach(c=>{
       const div = document.createElement("div");
       div.className="comment";
       div.textContent=c;
@@ -248,35 +180,20 @@ async function openModal(postId){
   }
   renderModal();
 
-  likesEl.onclick = async()=>{
-    if(!currentUser){ alert("Inicia sesión"); return; }
-    if(data.likedBy.includes(currentUser.uid)){
-      data.likes--; data.likedBy = data.likedBy.filter(u=>u!==currentUser.uid);
-    } else {
-      data.likes++; data.likedBy.push(currentUser.uid);
-    }
-    await db.collection("posts").doc(postId).set(data);
-    renderModal();
-    renderFeed();
+  likesEl.onclick = ()=>{
+    if(!currentUser){alert("Inicia sesión"); return;}
+    if(meme.liked){meme.likes--; meme.liked=false;}else{meme.likes++; meme.liked=true;}
+    renderModal(); renderFeed();
   }
 
-  btn.onclick = async()=>{
+  btn.onclick = ()=>{
     const val = input.value.trim();
-    if(val){
-      data.comments.push(val);
-      input.value="";
-      await db.collection("posts").doc(postId).set(data);
-      renderModal();
-      renderFeed();
-    }
+    if(val){meme.comments.push(val); input.value=""; renderModal();}
   }
 }
 
-// Cerrar modal
-document.querySelector(".close-modal").addEventListener("click",()=>modal.style.display="none");
-modal.addEventListener("click",(e)=>{if(e.target.id=="modal") e.target.style.display="none";});
+closeModalBtn.addEventListener("click",()=>modal.style.display="none");
+modal.addEventListener("click",(e)=>{if(e.target.id=="modal") modal.style.display="none";});
 </script>
 </body>
 </html>
-
-
