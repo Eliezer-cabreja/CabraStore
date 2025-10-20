@@ -16,22 +16,35 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 #auth-section button{padding:10px;border-radius:8px;border:none;background:#ff0000;color:#fff;cursor:pointer;transition:0.3s;}
 #auth-section button:hover{background:#ff4444;}
 .container{max-width:1000px;margin:20px auto;padding:0 15px;display:none;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:25px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:40px;} /* más separación */
 .card{background:#120000;border-radius:20px;overflow:hidden;cursor:pointer;position:relative;border:2px solid #330000;box-shadow:0 0 15px #ff0000;transition:0.4s;}
 .card:hover{transform:scale(1.05) rotate(-1deg);border-color:#ff4444;box-shadow:0 0 35px #ff0000;}
-.card img{width:100%;height:320px;object-fit:cover;display:block;border-bottom:2px solid #330000;transition:0.3s;}
+.card img{width:100%;height:280px;object-fit:cover;display:block;border-bottom:2px solid #330000;transition:0.3s;}
 .meta{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;}
 .caption{font-weight:bold;font-size:1em;color:#fff;}
 .likes{cursor:pointer;color:#ff4444;font-weight:bold;transition:0.3s;}
 .likes.liked{color:#ff0000;animation:pop 0.3s;}
 @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.5);}100%{transform:scale(1);}}
 .time{font-size:12px;color:#999;padding:0 15px 10px 15px;}
-/* Panel estilo TikTok */
-.side-panel{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;z-index:1000;display:flex;}
-.side-left{flex:2;display:flex;justify-content:center;align-items:center;padding:20px;}
-.side-left img{max-width:100%;max-height:90%;object-fit:contain;border:3px solid #ff0000;border-radius:15px;}
-.side-right{flex:1;background:#120000;padding:20px;display:flex;flex-direction:column;}
-.side-right .likes{font-size:20px;margin-bottom:15px;cursor:pointer;}
+
+/* Modal tipo Instagram */
+.modal{
+  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;justify-content:center;align-items:center;z-index:1000;flex-direction:column;
+}
+.modal-content{
+  max-width:80%;
+  max-height:90%;
+  background:#120000;
+  border:3px solid #ff0000;
+  border-radius:20px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:row;
+}
+.modal-left{flex:2;display:flex;justify-content:center;align-items:center;padding:20px;}
+.modal-left img{width:100%;max-height:90%;object-fit:contain;border-radius:15px;}
+.modal-right{flex:1;background:#120000;padding:20px;display:flex;flex-direction:column;}
+.modal-right .likes{font-size:20px;margin-bottom:15px;cursor:pointer;}
 .comments{flex:1;overflow-y:auto;margin-bottom:10px;}
 .comment{background:#220000;margin-top:5px;padding:6px;border-radius:6px;font-size:14px;}
 .comment-user{font-weight:bold;color:#ff4444;margin-right:5px;}
@@ -39,7 +52,7 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 .comment-input input{flex:1;padding:6px;border-radius:6px;border:none;background:#1b0b0b;color:#fff;}
 .comment-input button{padding:6px 12px;border-radius:6px;border:none;background:#ff0000;color:#fff;cursor:pointer;transition:0.2s;}
 .comment-input button:hover{background:#ff4444;}
-.close-panel{position:absolute;top:15px;right:25px;font-size:32px;color:#ff0000;cursor:pointer;font-weight:bold;text-shadow:0 0 15px #ff0000;}
+.close-modal{position:absolute;top:15px;right:25px;font-size:32px;color:#ff0000;cursor:pointer;font-weight:bold;text-shadow:0 0 15px #ff0000;}
 </style>
 </head>
 <body>
@@ -61,20 +74,22 @@ header p{color:#aaa;margin-top:5px;font-size:1.1em;}
 <div id="feed" class="grid"></div>
 </div>
 
-<!-- Panel estilo TikTok -->
-<div class="side-panel" id="sidePanel">
-<div class="side-left">
-<img src="" id="panelImg">
+<!-- Modal estilo Instagram -->
+<div class="modal" id="modal">
+<div class="close-modal" id="closeModal">&times;</div>
+<div class="modal-content">
+<div class="modal-left">
+<img src="" id="modalImg">
 </div>
-<div class="side-right">
-<div class="likes" id="panelLikes">❤️ 0</div>
-<div class="comments" id="panelComments"></div>
+<div class="modal-right">
+<div class="likes" id="modalLikes">❤️ 0</div>
+<div class="comments" id="modalComments"></div>
 <div class="comment-input">
-<input type="text" id="panelInput" placeholder="Escribe un comentario...">
-<button id="panelBtn">Comentar</button>
+<input type="text" id="modalInput" placeholder="Escribe un comentario...">
+<button id="modalBtn">Comentar</button>
 </div>
 </div>
-<div class="close-panel" id="closePanel">&times;</div>
+</div>
 </div>
 
 <script>
@@ -87,7 +102,7 @@ const memes = [
 
 let currentUser = null;
 
-// Auth (local)
+// Auth
 const authSection = document.getElementById("auth-section");
 const feedSection = document.getElementById("feed-section");
 const feedEl = document.getElementById("feed");
@@ -144,7 +159,7 @@ function renderFeed(){
     `;
     const imgEl = card.querySelector("img");
     const likeEl = card.querySelector(".likes");
-    imgEl.addEventListener("click",()=>openSidePanel(m));
+    imgEl.addEventListener("click",()=>openModal(m));
     likeEl.addEventListener("click", ()=>{
       if(!currentUser){alert("Inicia sesión"); return;}
       if(m.liked){m.likes--; m.liked=false;}else{m.likes++; m.liked=true;}
@@ -154,50 +169,50 @@ function renderFeed(){
   });
 }
 
-// Side Panel
-const sidePanel = document.getElementById("sidePanel");
-const panelImg = document.getElementById("panelImg");
-const panelLikes = document.getElementById("panelLikes");
-const panelComments = document.getElementById("panelComments");
-const panelInput = document.getElementById("panelInput");
-const panelBtn = document.getElementById("panelBtn");
-const closePanel = document.getElementById("closePanel");
+// Modal
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modalImg");
+const modalLikes = document.getElementById("modalLikes");
+const modalComments = document.getElementById("modalComments");
+const modalInput = document.getElementById("modalInput");
+const modalBtn = document.getElementById("modalBtn");
+const closeModal = document.getElementById("closeModal");
 
-function openSidePanel(meme){
-  sidePanel.style.display="flex";
-  panelImg.src = meme.imageURL;
+function openModal(meme){
+  modal.style.display="flex";
+  modalImg.src = meme.imageURL;
 
-  function renderPanel(){
-    panelLikes.textContent = `❤️ ${meme.likes}`;
-    panelLikes.className = `likes ${meme.liked ? "liked" : ""}`;
-    panelComments.innerHTML="";
+  function renderModal(){
+    modalLikes.textContent = `❤️ ${meme.likes}`;
+    modalLikes.className = `likes ${meme.liked?"liked":""}`;
+    modalComments.innerHTML="";
     meme.comments.forEach(c=>{
       const div = document.createElement("div");
       div.className="comment";
       div.innerHTML=`<span class="comment-user">${c.user}:</span>${c.text}`;
-      panelComments.appendChild(div);
+      modalComments.appendChild(div);
     });
   }
-  renderPanel();
+  renderModal();
 
-  panelLikes.onclick = ()=>{
+  modalLikes.onclick = ()=>{
     if(!currentUser){alert("Inicia sesión"); return;}
     if(meme.liked){meme.likes--; meme.liked=false;}else{meme.likes++; meme.liked=true;}
-    renderPanel(); renderFeed();
+    renderModal(); renderFeed();
   }
 
-  panelBtn.onclick = ()=>{
-    const val = panelInput.value.trim();
+  modalBtn.onclick = ()=>{
+    const val = modalInput.value.trim();
     if(val){
       meme.comments.push({user:currentUser.name,text:val});
-      panelInput.value="";
-      renderPanel();
+      modalInput.value="";
+      renderModal();
     }
   }
 }
 
-closePanel.addEventListener("click",()=>sidePanel.style.display="none");
-sidePanel.addEventListener("click",(e)=>{if(e.target.id=="sidePanel") sidePanel.style.display="none";});
+closeModal.addEventListener("click",()=>modal.style.display="none");
+modal.addEventListener("click",(e)=>{if(e.target.id=="modal") modal.style.display="none";});
 </script>
 </body>
 </html>
