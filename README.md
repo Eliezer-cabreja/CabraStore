@@ -1,2 +1,2 @@
-# CabraStore
-cabrastore.com
+# Dioses IA
+Dioses IA.com
