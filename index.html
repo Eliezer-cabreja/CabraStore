@@ -1,218 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💀 Chismesito Duro 💀</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
-body{margin:0;font-family:'Poppins',sans-serif;background:#0a0a0a;color:#fff;}
-header{text-align:center;padding:20px 10px;background:#1a0000;box-shadow:0 0 40px #ff0000;position:relative;}
-header h1{color:#ff0000;font-size:2.8em;text-shadow:0 0 20px #ff0000;}
-header p{color:#aaa;margin-top:5px;font-size:1.1em;}
-#logoutBtn{position:absolute;top:20px;left:20px;padding:10px;border:none;border-radius:8px;background:#ff0000;color:#fff;cursor:pointer;display:none;}
-#auth-section{max-width:400px;margin:40px auto;display:flex;flex-direction:column;gap:10px;}
-#auth-section input{padding:10px;border-radius:8px;border:none;background:#1b0b0b;color:#fff;}
-#auth-section button{padding:10px;border-radius:8px;border:none;background:#ff0000;color:#fff;cursor:pointer;transition:0.3s;}
-#auth-section button:hover{background:#ff4444;}
-.container{max-width:1000px;margin:20px auto;padding:0 15px;display:none;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:40px;} /* más separación */
-.card{background:#120000;border-radius:20px;overflow:hidden;cursor:pointer;position:relative;border:2px solid #330000;box-shadow:0 0 15px #ff0000;transition:0.4s;}
-.card:hover{transform:scale(1.05) rotate(-1deg);border-color:#ff4444;box-shadow:0 0 35px #ff0000;}
-.card img{width:100%;height:280px;object-fit:cover;display:block;border-bottom:2px solid #330000;transition:0.3s;}
-.meta{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;}
-.caption{font-weight:bold;font-size:1em;color:#fff;}
-.likes{cursor:pointer;color:#ff4444;font-weight:bold;transition:0.3s;}
-.likes.liked{color:#ff0000;animation:pop 0.3s;}
-@keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.5);}100%{transform:scale(1);}}
-.time{font-size:12px;color:#999;padding:0 15px 10px 15px;}
-
-/* Modal tipo Instagram */
-.modal{
-  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:none;justify-content:center;align-items:center;z-index:1000;flex-direction:column;
-}
-.modal-content{
-  max-width:80%;
-  max-height:90%;
-  background:#120000;
-  border:3px solid #ff0000;
-  border-radius:20px;
-  overflow:hidden;
-  display:flex;
-  flex-direction:row;
-}
-.modal-left{flex:2;display:flex;justify-content:center;align-items:center;padding:20px;}
-.modal-left img{width:100%;max-height:90%;object-fit:contain;border-radius:15px;}
-.modal-right{flex:1;background:#120000;padding:20px;display:flex;flex-direction:column;}
-.modal-right .likes{font-size:20px;margin-bottom:15px;cursor:pointer;}
-.comments{flex:1;overflow-y:auto;margin-bottom:10px;}
-.comment{background:#220000;margin-top:5px;padding:6px;border-radius:6px;font-size:14px;}
-.comment-user{font-weight:bold;color:#ff4444;margin-right:5px;}
-.comment-input{display:flex;gap:5px;margin-top:10px;}
-.comment-input input{flex:1;padding:6px;border-radius:6px;border:none;background:#1b0b0b;color:#fff;}
-.comment-input button{padding:6px 12px;border-radius:6px;border:none;background:#ff0000;color:#fff;cursor:pointer;transition:0.2s;}
-.comment-input button:hover{background:#ff4444;}
-.close-modal{position:absolute;top:15px;right:25px;font-size:32px;color:#ff0000;cursor:pointer;font-weight:bold;text-shadow:0 0 15px #ff0000;}
-</style>
+  <meta charset="UTF-8">
+  <title>Hacking Ético</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-<h1>💀 Chismesito Duro 💀</h1>
-<p id="headerText">Regístrate o inicia sesión para ver los chismes 🔥</p>
-<button id="logoutBtn">Cerrar sesión</button>
-</header>
 
-<div id="auth-section">
-<input id="name" type="text" placeholder="Nombre (solo para registrarse)">
-<input id="email" type="email" placeholder="Correo">
-<input id="password" type="password" placeholder="Contraseña">
-<button id="loginBtn">Iniciar sesión</button>
-<button id="registerBtn">Registrarse</button>
-</div>
+  <div class="app">
+    <h1 class="title">Hacking Ético</h1>
 
-<div class="container" id="feed-section">
-<div id="feed" class="grid"></div>
-</div>
+    <p class="desc">
+      El hacking ético ayuda a prevenir ataques y proteger sistemas.
+      Este libro explica cómo hacerlo de forma legal y responsable.
+    </p>
 
-<!-- Modal estilo Instagram -->
-<div class="modal" id="modal">
-<div class="close-modal" id="closeModal">&times;</div>
-<div class="modal-content">
-<div class="modal-left">
-<img src="" id="modalImg">
-</div>
-<div class="modal-right">
-<div class="likes" id="modalLikes">❤️ 0</div>
-<div class="comments" id="modalComments"></div>
-<div class="comment-input">
-<input type="text" id="modalInput" placeholder="Escribe un comentario...">
-<button id="modalBtn">Comentar</button>
-</div>
-</div>
-</div>
-</div>
+    <button class="btn primary" onclick="abrirLibro()">
+      📘 Libro del hacker
+    </button>
 
-<script>
-// Memes locales
-const memes = [
-  {id:"1", imageURL:"https://i.imgur.com/abcd123.jpg", caption:"Primer chisme 🔥", createdAt:"2025-10-20 14:00", likes:0, liked:false, comments:[]},
-  {id:"2", imageURL:"https://i.imgur.com/efgh456.jpg", caption:"Otro chisme 👀", createdAt:"2025-10-20 15:00", likes:0, liked:false, comments:[]},
-  {id:"3", imageURL:"https://i.imgur.com/ijkl789.jpg", caption:"Chisme sicópata 😎", createdAt:"2025-10-20 16:00", likes:0, liked:false, comments:[]}
-];
+    <p class="ip-text">
+      Si quieres ver tu Dirección IP, presiona el botón
+    </p>
 
-let currentUser = null;
+    <button class="btn ip" onclick="verIP()">
+      🌐 Ver IP
+    </button>
 
-// Auth
-const authSection = document.getElementById("auth-section");
-const feedSection = document.getElementById("feed-section");
-const feedEl = document.getElementById("feed");
-const headerText = document.getElementById("headerText");
-const logoutBtn = document.getElementById("logoutBtn");
+    <div id="ipResultado" class="warning"></div>
 
-document.getElementById("registerBtn").addEventListener("click", ()=>{
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if(!name || !email || !pass){alert("Completa todos los campos"); return;}
-  currentUser = {name,email};
-  authSection.style.display="none";
-  feedSection.style.display="block";
-  logoutBtn.style.display="block";
-  headerText.textContent = "Bienvenido "+currentUser.name+" 🔥";
-  renderFeed();
-});
+    <button class="btn speed" onclick="medirInternet()">
+      📶 Medir Internet
+    </button>
 
-document.getElementById("loginBtn").addEventListener("click", ()=>{
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if(!email || !pass){alert("Completa los campos"); return;}
-  currentUser = {name:"Usuario", email};
-  authSection.style.display="none";
-  feedSection.style.display="block";
-  logoutBtn.style.display="block";
-  headerText.textContent = "Bienvenido "+currentUser.name+" 🔥";
-  renderFeed();
-});
+    <div id="speedResultado" class="speed-result"></div>
 
-logoutBtn.addEventListener("click", ()=>{
-  currentUser = null;
-  authSection.style.display="flex";
-  feedSection.style.display="none";
-  logoutBtn.style.display="none";
-  headerText.textContent = "Regístrate o inicia sesión para ver los chismes 🔥";
-});
+    <button class="btn tools">
+      🛠 Herramientas
+    </button>
+  </div>
 
-// Render Feed
-function renderFeed(){
-  feedEl.innerHTML="";
-  memes.forEach((m)=>{
-    const card = document.createElement("div");
-    card.className="card";
-    const likedClass = m.liked ? "liked" : "";
-    card.innerHTML=`
-      <img src="${m.imageURL}" alt="chisme">
-      <div class="meta">
-        <div class="caption">${m.caption}</div>
-        <div class="likes ${likedClass}">❤️ ${m.likes}</div>
-      </div>
-      <div class="time">🕒 ${m.createdAt}</div>
-    `;
-    const imgEl = card.querySelector("img");
-    const likeEl = card.querySelector(".likes");
-    imgEl.addEventListener("click",()=>openModal(m));
-    likeEl.addEventListener("click", ()=>{
-      if(!currentUser){alert("Inicia sesión"); return;}
-      if(m.liked){m.likes--; m.liked=false;}else{m.likes++; m.liked=true;}
-      renderFeed();
-    });
-    feedEl.appendChild(card);
-  });
-}
-
-// Modal
-const modal = document.getElementById("modal");
-const modalImg = document.getElementById("modalImg");
-const modalLikes = document.getElementById("modalLikes");
-const modalComments = document.getElementById("modalComments");
-const modalInput = document.getElementById("modalInput");
-const modalBtn = document.getElementById("modalBtn");
-const closeModal = document.getElementById("closeModal");
-
-function openModal(meme){
-  modal.style.display="flex";
-  modalImg.src = meme.imageURL;
-
-  function renderModal(){
-    modalLikes.textContent = `❤️ ${meme.likes}`;
-    modalLikes.className = `likes ${meme.liked?"liked":""}`;
-    modalComments.innerHTML="";
-    meme.comments.forEach(c=>{
-      const div = document.createElement("div");
-      div.className="comment";
-      div.innerHTML=`<span class="comment-user">${c.user}:</span>${c.text}`;
-      modalComments.appendChild(div);
-    });
-  }
-  renderModal();
-
-  modalLikes.onclick = ()=>{
-    if(!currentUser){alert("Inicia sesión"); return;}
-    if(meme.liked){meme.likes--; meme.liked=false;}else{meme.likes++; meme.liked=true;}
-    renderModal(); renderFeed();
-  }
-
-  modalBtn.onclick = ()=>{
-    const val = modalInput.value.trim();
-    if(val){
-      meme.comments.push({user:currentUser.name,text:val});
-      modalInput.value="";
-      renderModal();
-    }
-  }
-}
-
-closeModal.addEventListener("click",()=>modal.style.display="none");
-modal.addEventListener("click",(e)=>{if(e.target.id=="modal") modal.style.display="none";});
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
