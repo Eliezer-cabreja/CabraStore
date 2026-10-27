@@ -1,0 +1,12 @@
+/* Estilos del inventario: pestañas y tarjetas compactas. */
+.inv-tabs{display:flex;gap:7px;margin:8px 0 12px;flex-wrap:wrap}
+.inv-tabs button{flex:1;min-width:90px;border:1px solid var(--line,#2f3748);background:var(--bg2,#232a3a);color:var(--tx,#f4efe6);border-radius:10px;padding:8px 12px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+.inv-tabs button.on{background:var(--ac,#ffc933);border-color:var(--acd,#c7921a);color:#3a2a00}
+.card.shop .sgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:10px}
+.card.shop .sc{min-width:0;padding:10px}
+.card.shop .sc .sp{height:clamp(58px,10vw,92px);min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card.shop .sc .sp img,.card.shop .sc .sp svg{width:auto;height:100%;max-width:100%;max-height:86px;object-fit:contain}
+.card.shop .sc h3{font-size:clamp(12px,2.5vw,15px);line-height:1.25}
+.card.shop .sc p{font-size:12px;line-height:1.35}
+.card.shop .sc .sbuy{font-size:12px;padding:8px 10px}
+@media(max-width:480px){.card.shop .sgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.card.shop .sc{padding:8px}.card.shop .sc .sp{height:62px}.card.shop .sc .sp img,.card.shop .sc .sp svg{max-height:60px}}
