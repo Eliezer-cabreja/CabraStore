@@ -359,24 +359,6 @@ const TI=svgIco(COIN_IN,'ti'),CUBE_I='<img class="ti ico" src="'+CUBE_ICON+'" al
 const PU={patines:{n:'Patines',t:25,d:'Saltas mucho más alto y corres un poco más rápido (25 s)'},carrito:{n:'Carrito',t:14,d:'Atraviesas los obstáculos y vas muy rápido (14 s)'},patineta:{n:'Patineta',t:14,d:'Vuelas sobre todo y vas rápido (14 s)'}};
 let CAT={objetos:[],ropa:[],personajes:[]},CAT_OK=false;
 const ownsAny=()=>Object.keys(PU).some(k=>P.inv[k]>0);
-// Helpers del inventario: toleran IDs/nombres como los devuelve el perfil.
-const normId=x=>String(x==null?'':(typeof x==='object'?(x.id??x.ropa_id??x.objeto_id??x.nombre??''):x)).trim().toLowerCase();
-const ownsRopa=o=>P.own.some(x=>{
-  const id=normId(x);
-  return id===normId(o.id)||id===normId(o.nombre)||
-    (typeof x==='object'&&(normId(x.ropa_id)===normId(o.id)||normId(x.id)===normId(o.id)));
-});
-const invCount=id=>{
-  const key=normId(id);
-  const aliases={carrito:['carritos'],patineta:['patinetas'],patines:['patin','patinaje']};
-  let total=0;
-  for(const [k,v] of Object.entries(P.inv||{})){
-    const nk=normId(k);
-    if(nk===key||(aliases[key]||[]).includes(nk))total+=Number(v)||0;
-  }
-  return total;
-};
-
 // Visuales de los potenciadores
 const skates=[legL,legR].flatMap(l=>[mk(BOX,0x2b6fd6,0.34,0.16,0.6,0,-0.58,-0.1,l),mk(BOX,0x222222,0.34,0.1,0.1,0,-0.7,-0.3,l),mk(BOX,0x222222,0.34,0.1,0.1,0,-0.7,0.08,l)]);
 const cart=new THREE.Group();chicken.add(cart);
@@ -542,8 +524,22 @@ function snapTimi(){
   return snapTimi.u;
 }
 const sid=x=>String(x).replace(/[^\w-]/g,'');
+const normId=x=>String(x==null?'':(typeof x==='object'?(x.id??x.ropa_id??x.objeto_id??x.nombre??''):x)).trim().toLowerCase();
+const ownsRopa=o=>P.own.some(x=>{const id=normId(x);return id===normId(o.id)||id===normId(o.nombre)||(typeof x==='object'&&(normId(x.ropa_id)===normId(o.id)||normId(x.id)===normId(o.id)));});
+const equippedRopa=o=>Array.isArray(P.ropaEq)?P.ropaEq.some(x=>normId(x)===normId(o.id)||normId(x)===normId(o.nombre)):normId(P.ropaEq)===normId(o.id)||normId(P.ropaEq)===normId(o.nombre);
+const invCount=id=>{
+  const key=normId(id);
+  const aliases={carrito:['carrito','carritos'],patineta:['patineta','patinetas'],patines:['patines','patin','patinaje']};
+  let total=0;
+  for(const [k,v] of Object.entries(P.inv||{})){
+    const nk=normId(k);
+    if(nk===key||(aliases[key]||[]).includes(nk)) total+=Number(v)||0;
+  }
+  return total;
+};
 let toastT=0,curPanel='';
-const offBanner=()=>PROFILE&&CAT_OK?'':'<div style="background:transparent;border:0;box-shadow:none;padding:0;margin:8px 0;color:#ff354d;font-size:14px;font-weight:600;"><span style="display:inline-flex;align-items:center;gap:6px;color:#ff354d;"><span aria-hidden="true" style="font-size:18px;line-height:1;">◌</span>Error de conexión</span></div>';
+// No mostrar un falso error mientras el catálogo todavía está cargando.
+const offBanner=()=>'';
 async function retryProf(){
   const r=await refreshProfile(),c=await loadCatalog();
   if(!(apiOk(r)&&c))toast(apiOk(r)?'No se pudo cargar la tienda':(r.net?'Error de conexión':apiMsg(r)),2600);
@@ -557,9 +553,25 @@ const itemImg=o=>o&&o.imagen?`<img src="${esc(imgSrc(String(o.imagen)))}" alt="$
 const findItem=id=>{for(const k of['objetos','ropa']){const f=CAT[k].find(x=>x.id===id);if(f)return f}return null};
 const nameOf=id=>{const f=findItem(id);return f?f.nombre:null};
 const pjImg=p=>{if(p.imagen)return itemImg(p);const u=p.id==='timi'?snapTimi():'';return u?`<img src="${u}" alt="${esc(p.nombre||'')}">`:PH};
-const puImg=k=>{const o=CAT.objetos.find(x=>x.id===k);return o&&o.imagen?itemImg(o):IMG[k]};
-const cubeImg=(D,id,nm)=>D.imagen?itemImg({imagen:D.imagen,nombre:nm}):id==='monedas'?COIN_BIG:findItem(id)?itemImg(findItem(id)):CUBE_BIG;
+const puImg=k=>{const o=CAT.objetos.find(x=>x.id===k);return o&&o.imagen?itemImg(o):(IMG[k]||PH)};
+const cubeImg=(D,id,nm)=>D.imagen?itemImg({imagen:D.imagen,nombre:nm}):id==='monedas'?COIN_BIG:findItem(id)?itemImg(findItem(id)):IMG[id]||CUBE_BIG;
 let shopTab='items',meTab='obj',meIdx=0;
+// Ajustes locales de tamaño para que las tarjetas no ocupen toda la pantalla en móvil.
+(function(){
+ const st=document.createElement('style');st.textContent=`
+ .sgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr))!important;gap:10px!important}
+ .sc{min-width:0!important;padding:10px!important}
+ .sc .sp{height:clamp(58px,10vw,92px)!important;min-height:0!important;display:flex;align-items:center;justify-content:center;overflow:hidden}
+ .sc .sp img,.sc .sp svg{width:auto!important;height:100%!important;max-width:100%!important;max-height:86px!important;object-fit:contain}
+ .sc h3{font-size:clamp(12px,2.5vw,15px)!important;line-height:1.25!important}
+ .sc p{font-size:12px!important;line-height:1.35!important}
+ .sc .sbuy{font-size:12px!important;padding:8px 10px!important}
+ .inv-tabs{display:flex;gap:7px;margin:8px 0 12px;flex-wrap:wrap}
+ .inv-tabs button{border:1px solid #46516b;background:#20283a;color:#fff;border-radius:10px;padding:8px 12px;font-size:13px}
+ .inv-tabs button.on{background:#6041a5;border-color:#9a7bff}
+ @media(max-width:480px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.sc{padding:8px!important}.sc .sp{height:62px!important}.sc .sp img,.sc .sp svg{max-height:60px!important}}
+ `;document.head.appendChild(st);
+})();
 function shopT(t){shopTab=t;openShop(true)}
 function openShop(reset){
   const sc=!reset&&dlg.classList.contains('on')&&dlg.firstChild?dlg.firstChild.scrollTop:0;
@@ -583,21 +595,42 @@ function shopBuy(id){guard(async()=>{
 })}
 function meT(t){meTab=t;openMe(true)}
 function mePj(d){const n=P.pj.length;meIdx=(meIdx+d+n)%n;openMe()}
-function openMe(reset){
+function meT(t){meTab=t;openMe(true)}
+async function openMe(reset){
+  // Recargar perfil e inventario desde el servidor cada vez que se abre.
+  // Si la petición falla, se conserva la última información válida en memoria.
+  await Promise.all([refreshProfile(), loadCatalog()]);
+  renderMe(reset);
+}
+function renderMe(reset){
   const sc=!reset&&dlg.classList.contains('on')&&dlg.firstChild?dlg.firstChild.scrollTop:0;
   const head='<div class="shead"><h2>'+ic('inventory_2')+' Inventario</h2><span class="sbal">'+TI+V(P.coins)+'</span><button class="sx" onclick="hide()" aria-label="Cerrar">'+ic('close')+'</button></div>';
-  const card=(img,name,desc,tag,btn)=>`<div class="sc"><div class="sp">${img}</div><span class="stag">${tag}</span><h3>${esc(name)}</h3><p>${esc(desc)}</p>${btn||''}</div>`;
-  const tabs='<div class="inv-tabs"><button class="'+(meTab==='obj'?'on':'')+'" onclick="meT(\'obj\')">Objetos</button><button class="'+(meTab==='ropa'?'on':'')+'" onclick="meT(\'ropa\')">Ropa</button></div>';
+  const card=(img,name,desc,tag,btn)=>`<div class="sc"><div class="sp">${img}</div><span class="stag">${tag}</span><h3>${esc(name)}</h3><p>${esc(desc)}</p>${btn}</div>`;
+  const tabs='<div class="inv-tabs"><button class="'+(meTab==='obj'?'on':'')+'" onclick="meT(\'obj\')">Objetos</button>'+
+    ((P.own.length>0||CAT.ropa.some(o=>ownsRopa(o)))?'<button class="'+(meTab==='ropa'?'on':'')+'" onclick="meT(\'ropa\')">Ropa</button>':'')+'</div>';
   let body='<div class="sgrid">';
   if(meTab==='ropa'){
     const owned=CAT.ropa.filter(o=>ownsRopa(o));
     if(owned.length){
-      body+=owned.map(o=>card(itemImg(o),o.nombre,o.descripcion||'','En tu inventario','')).join('');
+      body+=owned.map(o=>{
+        const equipped=equippedRopa(o);
+        return card(itemImg(o),o.nombre,o.descripcion||'',equipped?'Equipado':'En tu inventario',
+          '<button class="sbuy" onclick="toggleRopa(\''+sid(o.id)+'\','+(equipped?'false':'true')+')">'+(equipped?'Desequipar':'Equipar')+'</button>');
+      }).join('');
     }else{
-      body+='<p class="shint" style="grid-column:1/-1;text-align:center">No tienes ropa todavía.</p>';
+      body+=P.own.map(x=>{
+        const id=normId(x),o=CAT.ropa.find(y=>normId(y.id)===id||normId(y.nombre)===id);
+        const label=o?(o.nombre||String(x)):(typeof x==='object'?(x.nombre||x.id||'Ropa'):String(x));
+        const itemId=o?o.id:(typeof x==='object'?(x.id||x.ropa_id||x.objeto_id):x);
+        const equipped=o?equippedRopa(o):equippedRopa({id:itemId,nombre:label});
+        return card(o?itemImg(o):(IMG[id]||PH),label,o?(o.descripcion||''):'',equipped?'Equipado':'En tu inventario',
+          '<button class="sbuy" onclick="toggleRopa(\''+sid(itemId)+'\','+(equipped?'false':'true')+')">'+(equipped?'Desequipar':'Equipar')+'</button>');
+      }).join('');
     }
+    if(!P.own.length&&!owned.length)body+='<p class="shint" style="grid-column:1/-1;text-align:center">No tienes ropa todavía.</p>';
   }else{
     if(P.cubos>0)body+=card(CUBE_BIG,'Cubo','Contiene un objeto al azar. ¡Ábrelo para descubrirlo!','Tienes ×'+V(P.cubos),`<button class="sbuy" ${!PROFILE?'disabled':''} onclick="abrirCubo()">Abrir</button>`);
+    // Mostrar únicamente los potenciadores que el jugador realmente posee.
     const powerups=Object.keys(PU).filter(id=>invCount(id)>0).map(id=>{
       const n=invCount(id);
       const catalogItem=CAT.objetos.find(o=>normId(o.id)===id||normId(o.nombre)===normId(PU[id].n));
@@ -615,6 +648,17 @@ function openMe(reset){
   body+='</div>';
   curPanel='me';show(head+tabs+offBanner()+body,'shop');
   if(dlg.firstChild)dlg.firstChild.scrollTop=sc;
+}
+async function toggleRopa(id,equipar){
+  if(busy)return;busy=true;
+  try{
+    const path=equipar?'/api/ropa/equipar':'/api/ropa/desequipar';
+    const r=await apiAuth(path,{id});
+    if(!apiOk(r)){toast(apiMsg(r));return}
+    await syncFrom(r);
+    toast(equipar?'Ropa equipada':'Ropa desequipada');
+    openMe(true);
+  }finally{busy=false}
 }
 function equipPj(id){guard(async()=>{
   const r=await apiAuth('/api/personajes/equipar',{id});
@@ -686,14 +730,27 @@ const authFail=r=>!r.net&&(r.status===401||r.status===403);
 const apiMsg=r=>r.net?'No se pudo conectar con el servidor.':(r.data.mensaje||r.data.message||'Ocurrió un error. Inténtalo de nuevo.');
 const apiAuth=(path,body)=>apiPost(path,Object.assign({token:TOKEN},body||{}));
 function applyProfile(D){
-  D=D||{};PROFILE=D.monedas!==undefined;const iv=D.inventario||{};
-  P.coins=+D.monedas||0;P.cubos=+D.cubos||0;
-  P.inv={};for(const k in iv)P.inv[k]=+iv[k]||0;
-  P.own=Array.isArray(D.ropa)?D.ropa:[];
-  P.ropaEq=D.ropa_equipada||[];
-  P.pj=Array.isArray(D.personajes)?D.personajes:[];
-  P.pjEq=D.personaje_equipado||'';
-  P.bestDist=+D.mejor_distancia||0;P.runs=+D.partidas||0;
+  D=D||{};
+  const has=(...keys)=>keys.some(k=>Object.prototype.hasOwnProperty.call(D,k));
+  PROFILE=has('monedas')?D.monedas!==undefined:PROFILE;
+  if(has('monedas'))P.coins=+D.monedas||0;
+  if(has('cubos'))P.cubos=+D.cubos||0;
+
+  // No borrar inventario/ropa cuando una respuesta de partida solo devuelve monedas.
+  if(has('inventario','objetos_inventario','inventario_objetos')){
+    const iv=D.inventario??D.objetos_inventario??D.inventario_objetos??{};
+    P.inv={};for(const k in iv)P.inv[k]=+iv[k]||0;
+  }
+  if(has('ropa','ropas','inventario_ropa','ropa_inventario')){
+    const ownRaw=D.ropa??D.ropas??D.inventario_ropa??D.ropa_inventario??[];
+    P.own=Array.isArray(ownRaw)?ownRaw:(ownRaw&&typeof ownRaw==='object'?Object.keys(ownRaw).filter(k=>+ownRaw[k]>0):[]);
+  }
+  if(has('ropa_equipada','ropa_equipada_id','ropa_equipo','ropa_equipada_ids'))
+    P.ropaEq=D.ropa_equipada??D.ropa_equipada_id??D.ropa_equipo??D.ropa_equipada_ids??[];
+  if(has('personajes'))P.pj=Array.isArray(D.personajes)?D.personajes:[];
+  if(has('personaje_equipado'))P.pjEq=D.personaje_equipado||'';
+  if(has('mejor_distancia'))P.bestDist=+D.mejor_distancia||0;
+  if(has('partidas'))P.runs=+D.partidas||0;
   applyCos();upTok();
 }
 async function refreshProfile(){const r=await apiAuth('/api/juego/perfil');if(apiOk(r))applyProfile(r.data.Datos);return r}
@@ -721,7 +778,7 @@ async function enterGame(){
   toast(r.net?'Error de conexión':'No se pudo cargar tu perfil',3500);
   return{ok:true};
 }
-function clearSession(){ACC=null;NAME='';TOKEN='';CAT={objetos:[],ropa:[],personajes:[]};CAT_OK=false;try{localStorage.removeItem('cr-session');localStorage.removeItem('cr-name');localStorage.removeItem('cr-token')}catch(e){}applyProfile({})}
+function clearSession(){ACC=null;NAME='';TOKEN='';CAT={objetos:[],ropa:[],personajes:[]};CAT_OK=false;P.coins=0;P.cubos=0;P.inv={};P.own=[];P.ropaEq=[];P.pj=[];P.pjEq='';P.bestDist=0;P.runs=0;PROFILE=false;try{localStorage.removeItem('cr-session');localStorage.removeItem('cr-name');localStorage.removeItem('cr-token')}catch(e){}applyProfile({})}
 async function loginOK(em,nm,tk){
   ACC=em;NAME=nm||'';TOKEN=tk||'';
   if(REMEMBER_SESSION){try{localStorage.setItem('cr-session',em);localStorage.setItem('cr-name',NAME);localStorage.setItem('cr-token',TOKEN)}catch(e){}}
