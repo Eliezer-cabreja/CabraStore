@@ -1,15 +1,109 @@
-
 /* Chicken Runner - menú online.
- * La imagen del modo se obtiene por HTTP desde la API.
- * El emparejamiento y las notificaciones utilizan Socket.IO.
+ * La imagen se obtiene por HTTP.
+ * La conexión y el emparejamiento utilizan Socket.IO.
  */
 (function () {
   'use strict';
 
-  const IMAGE_API =
-    'https://api-chicken-runner.monitorealo.online/api/online/modos/1vs1/imagen';
+  const API_BASE = 'https://api-chicken-runner.monitorealo.online';
+  const IMAGE_API = `${API_BASE}/api/online/modos/1vs1/imagen`;
+  const SOCKET_URL = 'https://api-chicken-runner.monitorealo.online';
+
+  const SOCKET_CLIENT_URL =
+    'https://cdn.socket.io/4.7.5/socket.io.min.js';
+
+  let socket = null;
+  let socketPromise = null;
+
+  // -----------------------------------------
+  // INICIALIZAR SOCKET.IO
+  // -----------------------------------------
+
+  function conectarSocket() {
+    if (socket && socket.connected) {
+      return Promise.resolve(socket);
+    }
+
+    if (socketPromise) {
+      return socketPromise;
+    }
+
+    socketPromise = new Promise((resolve, reject) => {
+
+      function iniciarConexion() {
+        if (typeof window.io !== 'function') {
+          reject(new Error('Socket.IO no está disponible.'));
+          socketPromise = null;
+          return;
+        }
+
+        if (!socket) {
+          socket = window.io(SOCKET_URL, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            timeout: 20000
+          });
+        }
+
+        if (socket.connected) {
+          resolve(socket);
+          return;
+        }
+
+        socket.once('connect', () => {
+          console.log('Socket.IO conectado:', socket.id);
+          resolve(socket);
+        });
+
+        socket.once('connect_error', (error) => {
+          console.error('Error Socket.IO:', error);
+          reject(error);
+        });
+      }
+
+      if (typeof window.io === 'function') {
+        iniciarConexion();
+        return;
+      }
+
+      let script = document.querySelector(
+        `script[src="${SOCKET_CLIENT_URL}"]`
+      );
+
+      if (script) {
+        script.addEventListener('load', iniciarConexion, { once: true });
+        script.addEventListener('error', () => {
+          socketPromise = null;
+          reject(new Error('No se pudo cargar Socket.IO.'));
+        }, { once: true });
+        return;
+      }
+
+      script = document.createElement('script');
+      script.src = SOCKET_CLIENT_URL;
+      script.async = true;
+
+      script.onload = iniciarConexion;
+
+      script.onerror = () => {
+        socketPromise = null;
+        reject(new Error('No se pudo cargar Socket.IO.'));
+      };
+
+      document.head.appendChild(script);
+    });
+
+    return socketPromise;
+  }
+
+  // -----------------------------------------
+  // MENÚ ONLINE
+  // -----------------------------------------
 
   function initOnlineMenu() {
+
     const entry = document.getElementById('onlineEntry');
     const screen = document.getElementById('onlineScreen');
     const close = document.getElementById('onlineClose');
@@ -24,26 +118,18 @@
 
     let searching = false;
     let partidaEncontrada = false;
-    let socketEscuchando = null;
-
-    function getSocket() {
-      return window.socket || window.sk || window.socketClient || null;
-    }
-
-    function getMessage(data, fallback) {
-      return data && (data.mensaje || data.message)
-        ? data.mensaje || data.message
-        : fallback;
-    }
+    let eventosRegistrados = false;
 
     // -----------------------------------------
     // IMAGEN DEL MODO
     // -----------------------------------------
 
     async function loadModeImage() {
+
       if (!modeImage) return;
 
       try {
+
         const response = await fetch(IMAGE_API, {
           method: 'GET',
           headers: {
@@ -66,23 +152,24 @@
           typeof imageSource !== 'string' ||
           !imageSource.trim()
         ) {
-          throw new Error('La API no devolvió una URL de imagen válida.');
+          throw new Error('La API no devolvió una imagen válida.');
         }
 
-        modeImage.onload = function () {
+        modeImage.onload = () => {
           modeImage.hidden = false;
         };
 
-        modeImage.onerror = function () {
+        modeImage.onerror = () => {
           modeImage.hidden = true;
-          console.error('No se pudo cargar la imagen del modo online.');
+          console.error('No se pudo cargar la imagen del modo.');
         };
 
-        // Permite recibir tanto URLs completas como rutas relativas.
-        modeImage.src = new URL(imageSource.trim(), IMAGE_API).href;
+        modeImage.src = new URL(imageSource.trim(), API_BASE).href;
 
       } catch (error) {
+
         modeImage.hidden = true;
+
         console.error(
           'Error al obtener la imagen del modo online:',
           error
@@ -91,10 +178,11 @@
     }
 
     // -----------------------------------------
-    // ESTADO DE LA INTERFAZ
+    // ESTADOS
     // -----------------------------------------
 
     function resetSearch() {
+
       searching = false;
       partidaEncontrada = false;
 
@@ -104,31 +192,25 @@
       cancel.hidden = true;
     }
 
-    function showSearchError(message) {
-      resetSearch();
-      status.textContent = message;
+    function getMessage(data, fallback) {
+
+      return data && (data.mensaje || data.message)
+        ? (data.mensaje || data.message)
+        : fallback;
     }
 
     // -----------------------------------------
     // EVENTOS SOCKET.IO
     // -----------------------------------------
 
-    function listenSocketEvents() {
-      const socket = getSocket();
+    function registrarEventos(sk) {
 
-      if (!socket || typeof socket.on !== 'function') {
-        return false;
-      }
+      if (eventosRegistrados) return;
 
-      // Evita registrar los mismos eventos varias veces.
-      if (socketEscuchando === socket) {
-        return true;
-      }
+      eventosRegistrados = true;
 
-      socketEscuchando = socket;
+      sk.on('busqueda_iniciada', (data) => {
 
-      // El servidor confirmó que el jugador entró en la cola.
-      socket.on('busqueda_iniciada', function (data) {
         if (!searching) return;
 
         status.textContent = getMessage(
@@ -137,8 +219,8 @@
         );
       });
 
-      // El servidor encontró un rival.
-      socket.on('partida_encontrada', function (data) {
+      sk.on('partida_encontrada', (data) => {
+
         searching = false;
         partidaEncontrada = true;
 
@@ -147,17 +229,20 @@
 
         cancel.hidden = true;
 
-        status.textContent = '¡Rival encontrado! Preparando la partida...';
+        status.textContent =
+          '¡Rival encontrado! Preparando la partida...';
 
         document.dispatchEvent(
           new CustomEvent('chicken:online-found', {
             detail: data
           })
         );
+
+        console.log('Partida encontrada:', data);
       });
 
-      // El servidor confirmó la cancelación.
-      socket.on('busqueda_cancelada', function (data) {
+      sk.on('busqueda_cancelada', (data) => {
+
         if (partidaEncontrada) return;
 
         resetSearch();
@@ -168,10 +253,13 @@
         );
       });
 
-      // Error durante la búsqueda.
-      socket.on('error_busqueda', function (data) {
-        showSearchError(
-          getMessage(data, 'No se pudo iniciar la búsqueda.')
+      sk.on('error_busqueda', (data) => {
+
+        resetSearch();
+
+        status.textContent = getMessage(
+          data,
+          'No se pudo iniciar la búsqueda.'
         );
 
         document.dispatchEvent(
@@ -181,8 +269,8 @@
         );
       });
 
-      // El rival abandonó la partida.
-      socket.on('rival_desconectado', function (data) {
+      sk.on('rival_desconectado', (data) => {
+
         resetSearch();
 
         status.textContent = getMessage(
@@ -197,15 +285,59 @@
         );
       });
 
-      // Problemas de conexión con Socket.IO.
-      socket.on('connect_error', function (error) {
-        if (!searching) return;
+      sk.on('disconnect', (reason) => {
 
-        status.textContent = 'Error de conexión con el servidor.';
-        console.error('Error Socket.IO:', error);
+        console.warn('Socket.IO desconectado:', reason);
+
+        if (searching) {
+
+          resetSearch();
+
+          status.textContent =
+            'Se perdió la conexión con el servidor.';
+        }
       });
 
-      return true;
+      sk.on('connect_error', (error) => {
+
+        console.error('Error de conexión:', error);
+
+        if (searching) {
+
+          resetSearch();
+
+          status.textContent =
+            'No se pudo conectar con el servidor.';
+        }
+      });
+    }
+
+    // -----------------------------------------
+    // CONECTAR Y REGISTRAR EVENTOS
+    // -----------------------------------------
+
+    async function prepararSocket() {
+
+      try {
+
+        const sk = await conectarSocket();
+
+        registrarEventos(sk);
+
+        return sk;
+
+      } catch (error) {
+
+        console.error(
+          'No se pudo conectar con el servidor:',
+          error
+        );
+
+        status.textContent =
+          'No se pudo conectar con el servidor.';
+
+        return null;
+      }
     }
 
     // -----------------------------------------
@@ -213,23 +345,28 @@
     // -----------------------------------------
 
     function openOnline() {
+
       screen.classList.add('on');
+
       screen.setAttribute('aria-hidden', 'false');
 
       document.body.style.overflow = 'hidden';
 
-      listenSocketEvents();
       loadModeImage();
+
+      prepararSocket();
 
       close.focus();
     }
 
     function closeOnline() {
+
       if (searching) {
         stopSearch();
       }
 
       screen.classList.remove('on');
+
       screen.setAttribute('aria-hidden', 'true');
 
       document.body.style.overflow = '';
@@ -241,28 +378,42 @@
     // BUSCAR PARTIDA
     // -----------------------------------------
 
-    function startSearch() {
+    async function startSearch() {
+
       if (searching || partidaEncontrada) return;
-
-      const socket = getSocket();
-
-      if (!socket || typeof socket.emit !== 'function') {
-        status.textContent = 'No se pudo conectar con el servidor.';
-        return;
-      }
-
-      listenSocketEvents();
 
       searching = true;
 
       play.disabled = true;
-      play.textContent = 'BUSCANDO RIVAL...';
+      play.textContent = 'CONECTANDO...';
 
       cancel.hidden = false;
 
       status.textContent = 'Conectando con el servidor...';
 
-      socket.emit('buscar_partida');
+      const sk = await prepararSocket();
+
+      if (!sk) {
+
+        resetSearch();
+
+        return;
+      }
+
+      if (!sk.connected) {
+
+        status.textContent =
+          'Esperando conexión con el servidor...';
+
+        return;
+      }
+
+      play.textContent = 'BUSCANDO RIVAL...';
+
+      status.textContent =
+        'Buscando un jugador disponible...';
+
+      sk.emit('buscar_partida');
 
       document.dispatchEvent(
         new CustomEvent('chicken:online-search')
@@ -274,22 +425,23 @@
     // -----------------------------------------
 
     function stopSearch() {
+
       if (!searching) return;
 
-      const socket = getSocket();
-
-      if (socket && typeof socket.emit === 'function') {
-        socket.emit('cancelar_busqueda');
-      }
+      const sk = socket;
 
       searching = false;
+
+      if (sk && sk.connected) {
+        sk.emit('cancelar_busqueda');
+      }
 
       play.disabled = false;
       play.textContent = 'JUGAR';
 
       cancel.hidden = true;
 
-      status.textContent = 'Cancelando búsqueda...';
+      status.textContent = 'Búsqueda cancelada.';
 
       document.dispatchEvent(
         new CustomEvent('chicken:online-cancel-search')
@@ -308,13 +460,15 @@
 
     cancel.addEventListener('click', stopSearch);
 
-    screen.addEventListener('click', function (event) {
+    screen.addEventListener('click', (event) => {
+
       if (event.target === screen) {
         closeOnline();
       }
     });
 
-    document.addEventListener('keydown', function (event) {
+    document.addEventListener('keydown', (event) => {
+
       if (
         event.key === 'Escape' &&
         screen.classList.contains('on')
@@ -323,33 +477,21 @@
       }
     });
 
-    // Permite que otros scripts consulten los datos recibidos.
-    document.addEventListener('chicken:online-found', function (event) {
-      console.log('Datos de la partida:', event.detail);
-    });
-
-    // Si otro script genera un error, también actualizamos el menú.
-    document.addEventListener('chicken:online-error', function (event) {
-      if (searching) {
-        showSearchError(
-          getMessage(
-            event.detail,
-            'No se pudo iniciar la búsqueda.'
-          )
-        );
-      }
-    });
-
-    listenSocketEvents();
+    // Inicializar conexión.
+    prepararSocket();
   }
 
   if (document.readyState === 'loading') {
+
     document.addEventListener(
       'DOMContentLoaded',
       initOnlineMenu,
       { once: true }
     );
+
   } else {
+
     initOnlineMenu();
   }
+
 })();
