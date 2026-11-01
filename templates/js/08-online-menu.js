@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const IMAGE_API = '/api/online/modos/1vs1/imagen';
+  const IMAGE_API = 'https://api-chicken-runner.monitorealo.online/api/online/modos/1vs1/imagen';
 
   function initOnlineMenu() {
     const entry = document.getElementById('onlineEntry');
