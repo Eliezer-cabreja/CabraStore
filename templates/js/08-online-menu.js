@@ -39,7 +39,7 @@
 
         if (!socket) {
           socket = window.io(SOCKET_URL, {
-            transports: ['websocket', 'polling'],
+            transports: ['polling'],
             reconnection: true,
             reconnectionAttempts: 10,
             reconnectionDelay: 1000,
